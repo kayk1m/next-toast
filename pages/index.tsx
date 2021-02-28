@@ -30,7 +30,7 @@ const Root = styled.div`
 
 type ToastConfig = {
   type: 'default' | 'warning';
-  expiresIn: number;
+  expiresIn: string;
   content: string;
 };
 
@@ -38,13 +38,24 @@ const Home = () => {
   const { addToast } = useUI();
   const [toastConfig, setToastConfig] = React.useState<ToastConfig>({
     type: 'default',
-    expiresIn: 5,
+    expiresIn: '5',
     content: '',
   });
 
   const handleAddToast = React.useCallback(
     (config: ToastConfig) => {
-      addToast(config);
+      if (!isDecimal(config.expiresIn)) {
+        return window.alert('Enter only decimal numbers at Expires Time.');
+      }
+
+      if (!config.content) {
+        return window.alert('Fill in the content.');
+      }
+
+      addToast({
+        ...config,
+        expiresIn: Number(config.expiresIn),
+      });
     },
     [addToast],
   );
@@ -73,14 +84,12 @@ const Home = () => {
             type="number"
             variant="outlined"
             size="small"
-            value={String(toastConfig.expiresIn)}
+            value={toastConfig.expiresIn}
             onChange={(e) => {
-              if (isDecimal(e.target.value)) {
-                setToastConfig({
-                  ...toastConfig,
-                  expiresIn: Number(e.target.value),
-                });
-              }
+              setToastConfig({
+                ...toastConfig,
+                expiresIn: e.target.value,
+              });
             }}
           />
         </section>
