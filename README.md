@@ -1,9 +1,4 @@
-Nextjs template made by Kay.
+# Toast Example using Next.js, Typescript
 
-uses
-
-classnames,
-nprogress,
-tailwindcss and postcss,
-styled-components,
-bowser
+- use @headlessui/react as a transition library
+- use styled-components, tailwindcss, and classnames as style library

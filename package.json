@@ -1,6 +1,6 @@
 {
-  "name": "with-tailwindcss-styled-components-typescript",
-  "version": "0.1.0",
+  "name": "next-toast",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
