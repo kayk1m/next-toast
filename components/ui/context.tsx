@@ -19,8 +19,8 @@ export interface StateWithActions extends State {
     toastConfig:
       | string
       | {
-          type?: 'default' | 'warning';
-          expiresIn?: number;
+          type: 'default' | 'warning';
+          expiresIn: number;
           content: string;
         },
   ) => void;
@@ -121,8 +121,8 @@ export const UIProvider: React.FC = ({ ...props }) => {
       initializer:
         | string
         | {
-            type?: 'default' | 'warning';
-            expiresIn?: number;
+            type: 'default' | 'warning';
+            expiresIn: number;
             content: string;
           },
     ) => {
@@ -139,13 +139,13 @@ export const UIProvider: React.FC = ({ ...props }) => {
           type: 'ADD_TOAST',
           toast: {
             id,
-            type: initializer.type ?? 'default',
+            type: initializer.type,
             open: true,
             content: initializer.content,
           },
         });
 
-        const { expiresIn = DEFAULT_TOAST_EXPIRES_IN } = initializer;
+        const { expiresIn } = initializer;
 
         if (expiresIn > 0) {
           setTimeout(() => removeToast(id), expiresIn * 1000);
