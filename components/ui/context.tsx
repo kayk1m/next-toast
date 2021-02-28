@@ -1,8 +1,12 @@
 import React from 'react';
+import { v4 as uuidv4 } from 'uuid';
+
+const DEFAULT_TOAST_EXPIRES_IN = 10;
 
 export type Toast = {
   id: string;
   type: 'default' | 'warning';
+  open: boolean;
   content: string;
 };
 
@@ -11,7 +15,15 @@ export interface State {
 }
 
 export interface StateWithActions extends State {
-  addToast: (newToast: Toast) => void;
+  addToast: (
+    toastConfig:
+      | string
+      | {
+          type?: 'default' | 'warning';
+          expiresIn?: number;
+          content: string;
+        },
+  ) => void;
   removeToast: (id: string) => void;
 }
 
@@ -31,7 +43,15 @@ type Action =
       toast: Toast;
     }
   | {
+      type: 'SHOW_TOAST';
+      id: string;
+    }
+  | {
       type: 'REMOVE_TOAST';
+      id: string;
+    }
+  | {
+      type: 'HIDE_TOAST';
       id: string;
     };
 
@@ -42,9 +62,44 @@ export const UIContext = React.createContext<StateWithActions>(
 const uiReducer: (state: State, action: Action) => State = (state, action) => {
   switch (action.type) {
     case 'ADD_TOAST':
+      console.log('add-toast');
       return {
         ...state,
         toastQueue: [...state.toastQueue, action.toast],
+      };
+    case 'SHOW_TOAST':
+      console.log('show-toast', action.id);
+      return {
+        ...state,
+        toastQueue: state.toastQueue.map((toast) => {
+          if (toast.id === action.id) {
+            if (toast.open) {
+              return {
+                ...toast,
+                open: true,
+              };
+            }
+          }
+
+          return toast;
+        }),
+      };
+    case 'HIDE_TOAST':
+      console.log('hide-toast');
+      return {
+        ...state,
+        toastQueue: state.toastQueue.map((toast) => {
+          if (toast.id === action.id) {
+            if (toast.open) {
+              return {
+                ...toast,
+                open: false,
+              };
+            }
+          }
+
+          return toast;
+        }),
       };
     case 'REMOVE_TOAST':
       return {
@@ -56,9 +111,49 @@ const uiReducer: (state: State, action: Action) => State = (state, action) => {
 
 export const UIProvider: React.FC = ({ ...props }) => {
   const [state, dispatch] = React.useReducer(uiReducer, initialState);
-  const addToast = (newToast: Toast) =>
-    dispatch({ type: 'ADD_TOAST', toast: newToast });
-  const removeToast = (id: string) => dispatch({ type: 'REMOVE_TOAST', id });
+
+  const removeToast = React.useCallback(
+    (id: string) => dispatch({ type: 'HIDE_TOAST', id }),
+    [],
+  );
+  const addToast = React.useCallback(
+    (
+      initializer:
+        | string
+        | {
+            type?: 'default' | 'warning';
+            expiresIn?: number;
+            content: string;
+          },
+    ) => {
+      const id = uuidv4();
+      if (typeof initializer === 'string') {
+        dispatch({
+          type: 'ADD_TOAST',
+          toast: { id, type: 'default', open: true, content: initializer },
+        });
+
+        setTimeout(() => removeToast(id), DEFAULT_TOAST_EXPIRES_IN * 1000);
+      } else {
+        dispatch({
+          type: 'ADD_TOAST',
+          toast: {
+            id,
+            type: initializer.type ?? 'default',
+            open: true,
+            content: initializer.content,
+          },
+        });
+
+        const { expiresIn = DEFAULT_TOAST_EXPIRES_IN } = initializer;
+
+        if (expiresIn > 0) {
+          setTimeout(() => removeToast(id), expiresIn * 1000);
+        }
+      }
+    },
+    [removeToast],
+  );
 
   const value: StateWithActions = React.useMemo(
     () => ({
@@ -66,7 +161,7 @@ export const UIProvider: React.FC = ({ ...props }) => {
       addToast,
       removeToast,
     }),
-    [state],
+    [state, addToast, removeToast],
   );
 
   return <UIContext.Provider value={value} {...props} />;
